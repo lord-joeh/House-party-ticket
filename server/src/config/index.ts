@@ -20,9 +20,14 @@ const config = {
   event: {
     totalTickets: Number.parseInt(process.env.TOTAL_TICKETS || "200", 10),
     ticketPriceGhs: Number.parseFloat(process.env.TICKET_PRICE_GHS || "150"),
-    eventName: process.env.EVENT_NAME || "House Party 2025",
-    eventDate: new Date(process.env.EVENT_DATE || "2025-03-15T18:00:00.000Z"),
+    eventName: process.env.EVENT_NAME || "House Party 2026",
+    eventDate: new Date(process.env.EVENT_DATE || "2026-02-14T18:00:00.000Z"),
   },
+  arkesel: {
+    sender: process.env.ARKESEL_SENDER || "TICKETS",
+    apiKey: process.env.ARKESEL_API_KEY || "",
+    url: process.env.ARKESEL_URL || ""
+  }
 };
 
 export default config;

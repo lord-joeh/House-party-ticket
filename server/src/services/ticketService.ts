@@ -3,6 +3,7 @@ import TicketModel, { TicketStatus } from "@/models/Ticket";
 import OrderModel, { OrderStatus } from "@/models/Order";
 import { generateTicketCode, generateUUID } from "@/utils/response";
 import { initializePayment, verifyPayment } from "@/services/paystackService";
+import { sendTicketCode } from "./smsService";
 
 //  Check Availability
 export async function getAvailableTicketCount(): Promise<number> {
@@ -69,7 +70,7 @@ export async function initiateTicketPurchase({
 }: {
   name: string;
   phone: string;
-  email: string; // Paystack requires an email on every transaction
+  email: string;
   numberOfTickets: number;
 }): Promise<{
   orderId: string;
@@ -106,7 +107,7 @@ export async function initiateTicketPurchase({
     const result = await initializePayment({
       amount: amountInKobo,
       email,
-      reference: orderId, // orderId doubles as the Paystack reference
+      reference: orderId,
       callbackUrl: `${config.app.publicUrl}/api/tickets/paystack-callback`,
     });
     authorizationUrl = result.authorizationUrl;
@@ -133,9 +134,7 @@ export async function initiateTicketPurchase({
   };
 }
 
-// ─── Poll / Verify Payment ───────────────────────────────────────────────────
-// The front-end calls this after the user returns from Paystack's payment page,
-// or any time afterwards.  We call Paystack's /verify endpoint and finalise.
+// Poll / Verify Payment
 
 export async function pollPaymentStatus(orderId: string): Promise<{
   orderStatus: string;
@@ -272,6 +271,8 @@ export async function handleWebhookEvent(
     },
   );
 
+  await sendTicketCode(order.buyerPhone, ticketCodes);
+
   console.log(
     `[Webhook] Tickets issued for order ${reference}: ${ticketCodes.join(", ")}`,
   );
@@ -323,14 +324,14 @@ export async function verifyTicket(ticketCode: string): Promise<{
       return {
         valid: false,
         status: TicketStatus.RESERVED,
-        message: " Ticket is reserved but payment is not yet confirmed.",
+        message: "Ticket is reserved but payment is not yet confirmed.",
       };
 
     case TicketStatus.CANCELLED:
       return {
         valid: false,
         status: TicketStatus.CANCELLED,
-        message: " Ticket has been cancelled.",
+        message: "Ticket has been cancelled.",
       };
 
     default:
