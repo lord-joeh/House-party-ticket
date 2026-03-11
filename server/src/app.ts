@@ -3,7 +3,6 @@ import cors from "cors";
 import { connectDatabase } from "@/config/database";
 import { errorHandler } from "@/middleware/errorHandler";
 import ticketRoutes from "@/routes/tickets";
-import TicketModel, { TicketStatus } from "@/models/Ticket";
 import config from "@/config";
 
 const app: Application = express();
