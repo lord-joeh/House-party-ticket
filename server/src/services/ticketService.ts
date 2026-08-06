@@ -7,12 +7,35 @@ import { sendTicketCode } from "./smsService";
 
 //  Check Availability
 export async function getAvailableTicketCount(): Promise<number> {
-  const takenCount = await TicketModel.countDocuments({
+  // Count reserved/sold tickets, and pending orders
+  const takenTicketsCount = await TicketModel.countDocuments({
     status: {
       $in: [TicketStatus.RESERVED, TicketStatus.SOLD, TicketStatus.USED],
     },
   });
-  return config.event.totalTickets - takenCount;
+
+  const pendingOrders = await OrderModel.aggregate([
+    {
+      $match: {
+        status: {
+          $in: [OrderStatus.PENDING, OrderStatus.PAYMENT_INITIATED]
+        },
+        createdAt: {
+          $gte: new Date(Date.now() - 30 * 60 * 1000) // Exclude pending orders older than 30 minutes
+        }
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        totalPending: { $sum: "$numberOfTickets" }
+      }
+    }
+  ]);
+
+  const pendingCount = pendingOrders.length > 0 ? pendingOrders[0].totalPending : 0;
+
+  return Math.max(0, config.event.totalTickets - takenTicketsCount - pendingCount);
 }
 
 export async function checkAvailability(requested: number): Promise<{
