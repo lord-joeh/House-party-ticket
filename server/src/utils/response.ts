@@ -4,7 +4,8 @@ import crypto from "node:crypto";
 
 export function generateTicketCode(): string {
   const year = new Date().getFullYear();
-  const seq = String(crypto.randomInt(11111, 99999));
+  // Generate a random 5-digit number
+  const seq = String(crypto.randomInt(10000, 100000));
   return `HP-${year}-${seq}`;
 }
 
