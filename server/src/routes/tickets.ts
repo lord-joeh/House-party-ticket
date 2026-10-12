@@ -174,7 +174,7 @@ router.get(
         Array.isArray(ticketCode) ? ticketCode[0] : ticketCode,
       );
 
-      const statusCode = result.valid ? 200 : 400;
+      const statusCode = 200; // Always return 200 so the frontend can parse the successful response data structure which contains `valid: boolean`
       sendSuccess(res, result, statusCode, result.message);
     } catch (err) {
       sendError(res, 500, (err as Error).message, "INTERNAL_ERROR");

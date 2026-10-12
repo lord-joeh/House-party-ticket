@@ -8,20 +8,13 @@ import config from "@/config";
 const app: Application = express();
 
 app.use(cors());
-// Raw-body capture for the Paystack webhook route.
-// Paystack signs the raw JSON string — we must preserve it before express.json() parses it.
-app.use("/api/tickets/webhook", (req, _res, next) => {
-  let body = "";
-  req.on("data", (chunk: Buffer) => {
-    body += chunk.toString();
-  });
-  req.on("end", () => {
-    (req as Request & { rawBody: string }).rawBody = body;
-    next();
-  });
-});
-
-app.use(express.json());
+app.use(express.json({
+  verify: (req: Request, res: express.Response, buf: Buffer, encoding: string) => {
+    if (req.originalUrl === "/api/tickets/webhook") {
+      (req as Request & { rawBody: string }).rawBody = buf.toString(encoding as BufferEncoding || 'utf8');
+    }
+  }
+}));
 
 // Request logger (dev only)
 if (config.app.nodeEnv === "development") {
